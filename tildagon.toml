@@ -1,0 +1,13 @@
+[app]
+name = "MESH MSG"
+category = "Apps"
+
+[entry]
+class = "MessengerApp"
+
+[metadata]
+author = "webboggles"
+license = "CC-BY-NC-4.0"
+url = "https://github.com/web-order/tildagon-messenger"
+description = "ESP-NOW mesh messenger with hop-forwarded rooms, node list, on-screen and Keebdeck keyboard input."
+version = "1.0.0"
