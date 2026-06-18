@@ -1,47 +1,37 @@
-from events.input import BUTTON_TYPES
-
-try:
-    from machine import I2C
-    _HAS_I2C = True
-except ImportError:
-    _HAS_I2C = False
+from events.input import BUTTON_TYPES, ButtonDownEvent, ButtonUpEvent
+from system.eventbus import eventbus
 
 GLYPHS = "abcdefghijklmnopqrstuvwxyz0123456789 "
 START_GLYPH = GLYPHS.index("n")  # middle of the alphabet
 
-# BBQ10/BBQ20-compatible keyboard (Keebdeck) over I2C.
-KBD_ADDR = 0x1F
-REG_KEY = 0x04          # FIFO read (state, keycode)
-REG_KEY_COUNT = 0x05    # pending keys in FIFO (low 5 bits)
-KEY_PRESSED = 1
-
-
-def _scan_keyboard():
-    if not _HAS_I2C:
-        return None
-    for port in range(1, 7):
-        try:
-            bus = I2C(port)
-            if KBD_ADDR in bus.scan():
-                return bus
-        except Exception:
-            continue
-    return None
-
 
 class TextEntry:
-    """Letter-picker (up/down/right) with optional Keebdeck keyboard input."""
+    """Letter-picker (up/down/right) with optional Keebdeck keyboard input.
 
-    def __init__(self, initial="", max_len=100):
+    When a keyboard is present, typed characters arrive as ButtonDownEvents
+    carrying KEYBOARD_BUTTONS (emitted by keyboard.KeyboardInput); hardware
+    buttons still work as a fallback for send/back."""
+
+    def __init__(self, initial="", max_len=100, app=None, has_keyboard=False):
         self.max_len = max_len
         self.buffer = list(initial[:max_len])
         self.cur = START_GLYPH  # index into GLYPHS for the glyph being selected
-        self._kbd = _scan_keyboard()
         self.done = False
         self.cancelled = False
+        self._app = app
+        self._kbd = has_keyboard and app is not None
+        self._shift = False
+        if self._kbd:
+            eventbus.on(ButtonDownEvent, self._on_key_down, app)
+            eventbus.on(ButtonUpEvent, self._on_key_up, app)
 
     def has_keyboard(self):
-        return self._kbd is not None
+        return self._kbd
+
+    def close(self):
+        if self._kbd:
+            eventbus.remove(ButtonDownEvent, self._on_key_down, self._app)
+            eventbus.remove(ButtonUpEvent, self._on_key_up, self._app)
 
     def text(self):
         return "".join(self.buffer)
@@ -49,9 +39,23 @@ class TextEntry:
     def cur_glyph(self):
         return GLYPHS[self.cur]
 
-    # --- Letter-picker buttons ---
+    def _append(self, ch):
+        if len(self.buffer) < self.max_len:
+            self.buffer.append(ch)
+
+    # --- Hardware buttons ---
 
     def update(self, button_states):
+        if self._kbd:
+            # Typing is driven by keyboard events; keep hardware send/back.
+            if button_states.get(BUTTON_TYPES["CONFIRM"]):
+                button_states.clear()
+                self.done = True
+            elif button_states.get(BUTTON_TYPES["CANCEL"]):
+                button_states.clear()
+                self.cancelled = True
+            return
+
         if button_states.get(BUTTON_TYPES["UP"]):
             button_states.clear()
             self.cur = (self.cur - 1) % len(GLYPHS)
@@ -60,9 +64,8 @@ class TextEntry:
             self.cur = (self.cur + 1) % len(GLYPHS)
         elif button_states.get(BUTTON_TYPES["RIGHT"]):
             button_states.clear()
-            if len(self.buffer) < self.max_len:
-                self.buffer.append(GLYPHS[self.cur])
-                self.cur = START_GLYPH
+            self._append(GLYPHS[self.cur])
+            self.cur = START_GLYPH
         elif button_states.get(BUTTON_TYPES["CONFIRM"]):
             button_states.clear()
             self.done = True
@@ -73,36 +76,28 @@ class TextEntry:
             else:
                 self.cancelled = True
 
-        self._poll_keyboard()
+    # --- Keyboard events (KEYBOARD_BUTTONS group) ---
 
-    # --- Keebdeck FIFO ---
-
-    def _poll_keyboard(self):
-        if not self._kbd:
+    def _on_key_down(self, event):
+        btn = event.button.find_parent_in_group("Keyboard")
+        if btn is None:
             return
-        try:
-            cnt = self._kbd.readfrom_mem(KBD_ADDR, REG_KEY_COUNT, 1)[0] & 0x1F
-        except Exception:
-            self._kbd = None
-            return
-        for _ in range(cnt):
-            try:
-                state, code = self._kbd.readfrom_mem(KBD_ADDR, REG_KEY, 2)
-            except Exception:
-                self._kbd = None
-                return
-            if state != KEY_PRESSED:
-                continue
-            self._handle_key(code)
-
-    def _handle_key(self, code):
-        if code in (8, 127):  # backspace / delete
+        name = btn.name
+        if name == "SHIFT":
+            self._shift = True
+        elif name == "ENTER":
+            self.done = True
+        elif name == "ESCAPE":
+            self.cancelled = True
+        elif name == "BACKSPACE":
             if self.buffer:
                 self.buffer.pop()
-        elif code in (10, 13):  # enter
-            self.done = True
-        elif code == 27:  # escape
-            self.cancelled = True
-        elif 32 <= code < 127:
-            if len(self.buffer) < self.max_len:
-                self.buffer.append(chr(code))
+        elif name == "SPACE":
+            self._append(" ")
+        elif len(name) == 1:
+            self._append(name if self._shift else name.lower())
+
+    def _on_key_up(self, event):
+        btn = event.button.find_parent_in_group("Keyboard")
+        if btn is not None and btn.name == "SHIFT":
+            self._shift = False

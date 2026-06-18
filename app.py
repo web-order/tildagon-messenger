@@ -30,6 +30,7 @@ else:
 
 import net
 from text_entry import TextEntry
+from keyboard import KeyboardInput
 
 try:
     import imu
@@ -86,6 +87,7 @@ DEG = 0.01745329
 class MessengerApp(app.App):
     def __init__(self):
         self.button_states = Buttons(self)
+        self.kbd = KeyboardInput()
         self.state = STATE_SPLASH
         self.splash_t = 0
 
@@ -136,6 +138,7 @@ class MessengerApp(app.App):
     # --- Update dispatch ---
 
     def update(self, delta):
+        self.kbd.poll()
         if self.flash_t > 0:
             self.flash_t -= delta
         if self.state == STATE_SPLASH:
@@ -165,6 +168,15 @@ class MessengerApp(app.App):
                     self.state = STATE_ROOMS
                     return
 
+    def _new_entry(self, initial, max_len):
+        return TextEntry(initial, max_len, app=self,
+                         has_keyboard=self.kbd.present())
+
+    def _close_entry(self):
+        if self.entry is not None:
+            self.entry.close()
+            self.entry = None
+
     def _rooms(self):
         return self.net_mgr.rooms
 
@@ -185,7 +197,7 @@ class MessengerApp(app.App):
             self.state = STATE_NODES
         elif self.button_states.get(BUTTON_TYPES["LEFT"]):
             self.button_states.clear()
-            self.entry = TextEntry("", net.ROOM_MAX)
+            self.entry = self._new_entry("", net.ROOM_MAX)
             self.state = STATE_ADD_ROOM
         elif self.button_states.get(BUTTON_TYPES["CANCEL"]):
             self.button_states.clear()
@@ -202,7 +214,7 @@ class MessengerApp(app.App):
         msgs = self.net_mgr.messages.get(room, [])
         if self.button_states.get(BUTTON_TYPES["CONFIRM"]):
             self.button_states.clear()
-            self.entry = TextEntry("", net.TEXT_MAX)
+            self.entry = self._new_entry("", net.TEXT_MAX)
             self.state = STATE_COMPOSE
         elif self.button_states.get(BUTTON_TYPES["UP"]):
             self.button_states.clear()
@@ -213,7 +225,7 @@ class MessengerApp(app.App):
         elif self.button_states.get(BUTTON_TYPES["LEFT"]):
             self.button_states.clear()
             self.name_return_state = STATE_CHAT
-            self.entry = TextEntry(self.player_name.strip(), net.NAME_MAX)
+            self.entry = self._new_entry(self.player_name.strip(), net.NAME_MAX)
             self.state = STATE_NAME
         elif self.button_states.get(BUTTON_TYPES["CANCEL"]):
             self.button_states.clear()
@@ -224,7 +236,7 @@ class MessengerApp(app.App):
         msgs = self.net_mgr.get_dm_thread(self.dm_peer)
         if self.button_states.get(BUTTON_TYPES["CONFIRM"]):
             self.button_states.clear()
-            self.entry = TextEntry("", net.TEXT_MAX)
+            self.entry = self._new_entry("", net.TEXT_MAX)
             self.state = STATE_DM_COMPOSE
         elif self.button_states.get(BUTTON_TYPES["UP"]):
             self.button_states.clear()
@@ -260,7 +272,7 @@ class MessengerApp(app.App):
                     self.player_name = (txt + "      ")[:net.NAME_MAX]
                     self._save_name()
                 self.state = self.name_return_state
-            self.entry = None
+            self._close_entry()
         elif self.entry.cancelled:
             if self.state == STATE_COMPOSE:
                 self.state = STATE_CHAT
@@ -270,7 +282,7 @@ class MessengerApp(app.App):
                 self.state = self.name_return_state
             else:
                 self.state = STATE_ROOMS
-            self.entry = None
+            self._close_entry()
 
     def _up_nodes(self):
         peers = self.net_mgr.dm_peers()
@@ -293,7 +305,7 @@ class MessengerApp(app.App):
         elif self.button_states.get(BUTTON_TYPES["LEFT"]):
             self.button_states.clear()
             self.name_return_state = STATE_NODES
-            self.entry = TextEntry(self.player_name.strip(), net.NAME_MAX)
+            self.entry = self._new_entry(self.player_name.strip(), net.NAME_MAX)
             self.state = STATE_NAME
         elif self.button_states.get(BUTTON_TYPES["RIGHT"]):
             self.button_states.clear()
