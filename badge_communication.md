@@ -5,7 +5,7 @@ The Tildagon badge (ESP32) supports **ESP-NOW** for direct badge-to-badge radio 
 ## Key Facts
 
 - Works over 2.4&nbsp;GHz Wi-Fi radio, no network join required
-- As of **TildagonOS 1.9.0**, broadcast works &mdash; no need to know the recipient's MAC address
+- As of **TildagonOS 1.9.0**, broadcast works - no need to know the recipient's MAC address
 - Use broadcast MAC `b'\xff\xff\xff\xff\xff\xff'` to reach all listening badges
 - Reference implementation: [TildaDrop](https://github.com/ntflix/TildaDrop)
 - Full API: [MicroPython ESP-NOW docs](https://docs.micropython.org/en/latest/library/espnow.html)
@@ -49,9 +49,9 @@ host, msg = e.recv()
 
 This app layers a small mesh protocol on top of ESP-NOW broadcast (see `net.py`):
 
-- **`PKT_HELLO` (0x01)** &mdash; periodic presence beacon (`origin_id` + name) so the node list populates without traffic
-- **`PKT_MSG` (0x10)** &mdash; room message: `ttl`, `origin_id`, `seq`, room, sender name, text
-- **`PKT_DM` (0x11)** &mdash; direct message: as above plus a `dest_id` for the target peer
+- **`PKT_HELLO` (0x01)** - periodic presence beacon (`origin_id` + name) so the node list populates without traffic
+- **`PKT_MSG` (0x10)** - room message: `ttl`, `origin_id`, `seq`, room, sender name, text
+- **`PKT_DM` (0x11)** - direct message: as above plus a `dest_id` for the target peer
 
 Mesh behaviour:
 

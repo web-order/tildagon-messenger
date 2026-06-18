@@ -4,14 +4,14 @@ ESP-NOW mesh messenger for the [Tildagon badge](https://tildagon.badge.emfcamp.o
 
 ## Features
 
-- ESP-NOW mesh chat &mdash; messages hop across badges (TTL relay with de-duplication)
-- Multiple rooms &mdash; `Public` is always first; anyone can add custom rooms, visible to everyone
+- ESP-NOW mesh chat - messages hop across badges (TTL relay with de-duplication)
+- Multiple rooms - `Public` is always first; anyone can add custom rooms, visible to everyone
 - Room name travels with each message and appears in the receiver's room list
-- Direct messages &mdash; pick a peer from the node list and chat 1:1 (also mesh-relayed)
+- Direct messages - pick a peer from the node list and chat 1:1 (also mesh-relayed)
 - Node list showing peer ids &amp; usernames, with online indicator and unread badges
 - On-screen letter-picker (up/down to choose a glyph, right to add, confirm to send)
-- Optional Keebdeck keyboard hexpansion (BBQ10/BBQ20-compatible I2C) for direct typing
-- Background listener &mdash; receives even when minimised, blinks a unique rainbow LED pattern
+- Optional Keebdeck keyboard for direct typing - auto-detects the davedarko KeebDeck Hexpansion (TCA8418, I2C `0x34`) or Solder Party KeebDeck Basic (BBQ10/BBQ20, I2C `0x1F`); keystrokes are re-emitted as `events.input` button events using `KEYBOARD_BUTTONS`
+- Background listener - receives even when minimised, blinks a unique rainbow LED pattern
 - New messages flash across the top quarter of the screen
 - Settable username
 
@@ -63,13 +63,14 @@ With a Keebdeck keyboard plugged in, just type; Enter sends, Esc goes back.
 mpremote cp app.py :/apps/espnow_messenger/app.py
 mpremote cp net.py :/apps/espnow_messenger/net.py
 mpremote cp text_entry.py :/apps/espnow_messenger/text_entry.py
+mpremote cp keyboard.py :/apps/espnow_messenger/keyboard.py
 mpremote cp logo.png :/apps/espnow_messenger/logo.png
 mpremote cp tildagon.toml :/apps/espnow_messenger/tildagon.toml
 ```
 
 ## Credits
 
-[@webboggles](https://github.com/web-order) &mdash; [weborder.uk](https://weborder.uk)
+[@webboggles](https://github.com/web-order) - [weborder.uk](https://weborder.uk)
 
 ## Licence
 
