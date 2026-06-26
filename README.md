@@ -10,7 +10,7 @@ ESP-NOW mesh messenger for the [Tildagon badge](https://tildagon.badge.emfcamp.o
 - Direct messages - pick a peer from the node list and chat 1:1 (also mesh-relayed)
 - Node list showing peer ids &amp; usernames, with online indicator and unread badges
 - On-screen letter-picker (up/down to choose a glyph, right to add, confirm to send)
-- Optional Keebdeck keyboard for direct typing - auto-detects the davedarko KeebDeck Hexpansion (TCA8418, I2C `0x34`) or Solder Party KeebDeck Basic (BBQ10/BBQ20, I2C `0x1F`); keystrokes are re-emitted as `events.input` button events using `KEYBOARD_BUTTONS`
+- Optional Keebdeck keyboard for direct typing - auto-detects the davedarko KeebDeck Hexpansion (TCA8418, I2C `0x34`) or Solder Party KeebDeck Basic (BBQ10/BBQ20, I2C `0x1F`); keystrokes are re-emitted as `events.input` button events using `KEYBOARD_BUTTONS` (**untested** - no hardware to verify)
 - Background listener - receives even when minimised, blinks a unique rainbow LED pattern
 - New messages flash across the top quarter of the screen
 - Settable username
@@ -55,7 +55,7 @@ ESP-NOW mesh messenger for the [Tildagon badge](https://tildagon.badge.emfcamp.o
 | C (Confirm) | Send / save |
 | F (Cancel) | Delete / back |
 
-With a Keebdeck keyboard plugged in, just type; Enter sends, Esc goes back.
+With a Keebdeck keyboard plugged in, just type; Enter sends, Esc goes back. (Keyboard hexpansion support is untested - no hardware available to verify.)
 
 ## Install
 
