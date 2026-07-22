@@ -92,7 +92,7 @@ class MessengerApp(app.App):
         self.splash_t = 0
 
         self.player_name = self._load_name()
-        self.net_mgr = net.NetManager()
+        self.net_mgr = net.NetManager(self)
         self._load_rooms()
 
         self.room_sel = 0
